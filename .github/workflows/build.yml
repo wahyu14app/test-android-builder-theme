@@ -28,13 +28,12 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Build & Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -73,7 +72,6 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: release-${{ github.event.inputs.sellerId }}-${{ github.run_number }}
           name: Release for ${{ github.event.inputs.appName }}
           files: app/build/outputs/apk/release/app-release.apk
