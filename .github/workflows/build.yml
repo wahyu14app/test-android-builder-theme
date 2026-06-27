@@ -56,14 +56,28 @@ jobs:
           CALLBACK_URL: ${{ github.event.inputs.callbackUrl }}
         run: |
           ./gradlew assembleRelease -PsellerId="$SELLER_ID" -PappName="$APP_NAME" -PthemeId="$THEME_ID" -PthemeVersion="$THEME_VERSION" -PthemeColor="$THEME_COLOR" -PcallbackUrl="$CALLBACK_URL"
-          echo "APK_PATH=app/build/outputs/apk/release/app-release-unsigned.apk" >> "$GITHUB_ENV"
+
+          if [ -f "app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+            echo "APK_PATH=app/build/outputs/apk/release/app-release-unsigned.apk" >> "$GITHUB_ENV"
+          elif [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            echo "APK_PATH=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_ENV"
+          else
+            echo "APK file not found. Listing build outputs:" >&2
+            find app/build/outputs -type f | head -50 >&2
+            exit 1
+          fi
+
+          SAFE_APP_NAME=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr ' /:' '_')
+          echo "ARTIFACT_NAME=app-release-${SAFE_APP_NAME}-${{ github.run_number }}" >> "$GITHUB_ENV"
           echo "APK_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_ENV"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.APK_PATH }}
+          retention-days: 30
+          if-no-files-found: error
 
       - name: Send success callback
         if: success()

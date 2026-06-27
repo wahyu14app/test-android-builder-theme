@@ -63,6 +63,31 @@ Payload gagal:
 }
 ```
 
+### 5. Contoh Payload yang Diterima di Backend QianPulsa
+Backend Anda bisa menerima payload seperti berikut saat build selesai:
+
+```json
+{
+  "sellerId": "32935e09-7ce2-4df0-832d-bbb23a2ccf49",
+  "status": "SUCCESS",
+  "apkUrl": "https://github.com/wahyu14app/test-android-builder-theme/actions/runs/123456789",
+  "themeId": "classic_blue",
+  "themeVersion": "1.0.0"
+}
+```
+
+Contoh handler sederhana dengan Node.js/Express:
+
+```js
+app.post('/api/webhook/github/callback', (req, res) => {
+  const { sellerId, status, apkUrl, themeId, themeVersion, errorMessage } = req.body;
+
+  console.log('Webhook build result:', { sellerId, status, apkUrl, themeId, themeVersion, errorMessage });
+
+  return res.status(200).json({ received: true });
+});
+```
+
 ## Cara menjalankan
 
 ### Lokal
