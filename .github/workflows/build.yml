@@ -1,4 +1,4 @@
-name: Build Android App
+name: Build White-Label Android App
 
 on:
   workflow_dispatch:
@@ -56,9 +56,31 @@ jobs:
           CALLBACK_URL: ${{ github.event.inputs.callbackUrl }}
         run: |
           ./gradlew assembleRelease -PsellerId="$SELLER_ID" -PappName="$APP_NAME" -PthemeId="$THEME_ID" -PthemeVersion="$THEME_VERSION" -PthemeColor="$THEME_COLOR" -PcallbackUrl="$CALLBACK_URL"
+          echo "APK_PATH=app/build/outputs/apk/release/app-release-unsigned.apk" >> "$GITHUB_ENV"
+          echo "APK_URL=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_ENV"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: ${{ env.APK_PATH }}
+
+      - name: Send success callback
+        if: success()
+        env:
+          CALLBACK_URL: ${{ github.event.inputs.callbackUrl }}
+        run: |
+          curl --fail --silent --show-error -X POST "$CALLBACK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: ${{ secrets.QIANPULSA_WEBHOOK_SECRET }}" \
+            -d "{\"sellerId\":\"${{ github.event.inputs.sellerId }}\",\"status\":\"SUCCESS\",\"apkUrl\":\"${{ env.APK_URL }}\",\"themeId\":\"${{ github.event.inputs.themeId }}\",\"themeVersion\":\"${{ github.event.inputs.themeVersion }}\"}"
+
+      - name: Send failure callback
+        if: failure()
+        env:
+          CALLBACK_URL: ${{ github.event.inputs.callbackUrl }}
+        run: |
+          curl --fail --silent --show-error -X POST "$CALLBACK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: ${{ secrets.QIANPULSA_WEBHOOK_SECRET }}" \
+            -d "{\"sellerId\":\"${{ github.event.inputs.sellerId }}\",\"status\":\"FAILED\",\"errorMessage\":\"Proses build gagal di tahap kompilasi GitHub Action.\"}"
