@@ -21,6 +21,18 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    val sellerId = project.findProperty("sellerId") as String? ?: "default_seller"
+    val appName = project.findProperty("appName") as String? ?: "QianPulsa"
+    val themeId = project.findProperty("themeId") as String? ?: "default"
+    val themeVersion = project.findProperty("themeVersion") as String? ?: "1.0.0"
+    val themeColor = project.findProperty("themeColor") as String? ?: "#000000"
+
+    resValue("string", "app_name", appName)
+    buildConfigField("String", "SELLER_ID", "\"$sellerId\"")
+    buildConfigField("String", "THEME_ID", "\"$themeId\"")
+    buildConfigField("String", "THEME_VERSION", "\"$themeVersion\"")
+    buildConfigField("String", "THEME_COLOR", "\"$themeColor\"")
   }
 
   signingConfigs {
@@ -64,6 +76,7 @@ android {
   buildFeatures {
     compose = true
     buildConfig = true
+    resValues = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }

@@ -1,19 +1,36 @@
-name: Build Android APK
+name: Build Android APK (QianPulsa White-Label)
 
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
-  workflow_dispatch: # Allows manual trigger from the Actions tab
+  workflow_dispatch:
+    inputs:
+      sellerId:
+        description: 'Seller ID'
+        required: true
+        type: string
+      appName:
+        description: 'App Name'
+        required: true
+        type: string
+      themeId:
+        description: 'Theme ID'
+        required: true
+        type: string
+      themeVersion:
+        description: 'Theme Version'
+        required: true
+        type: string
+      themeColor:
+        description: 'Theme Color (Hex)'
+        required: true
+        type: string
+      callbackUrl:
+        description: 'Webhook Callback URL'
+        required: true
+        type: string
 
 jobs:
   build:
-    name: Build APKs
+    name: Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -46,20 +63,42 @@ jobs:
       - name: Generate Debug Keystore
         run: keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PsellerId="${{ github.event.inputs.sellerId }}" -PappName="${{ github.event.inputs.appName }}" -PthemeId="${{ github.event.inputs.themeId }}" -PthemeVersion="${{ github.event.inputs.themeVersion }}" -PthemeColor="${{ github.event.inputs.themeColor }}"
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - name: Create Release and Upload APK
+        id: create_release
+        uses: softprops/action-gh-release@v2
         with:
-          name: qianpulsa-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          tag_name: release-${{ github.event.inputs.sellerId }}-${{ github.run_number }}
+          name: Release for ${{ github.event.inputs.appName }}
+          files: app/build/outputs/apk/release/app-release.apk
 
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: qianpulsa-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+      - name: Send Webhook Callback (Success)
+        if: success()
+        run: |
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/release-${{ github.event.inputs.sellerId }}-${{ github.run_number }}/app-release.apk"
+          
+          curl -X POST "${{ github.event.inputs.callbackUrl }}" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: ${{ secrets.QIANPULSA_WEBHOOK_SECRET }}" \
+            -d '{
+              "sellerId": "${{ github.event.inputs.sellerId }}",
+              "status": "SUCCESS",
+              "apkUrl": "'"$APK_URL"'",
+              "themeId": "${{ github.event.inputs.themeId }}",
+              "themeVersion": "${{ github.event.inputs.themeVersion }}"
+            }'
+            
+      - name: Send Webhook Callback (Failure)
+        if: failure()
+        run: |
+          curl -X POST "${{ github.event.inputs.callbackUrl }}" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: ${{ secrets.QIANPULSA_WEBHOOK_SECRET }}" \
+            -d '{
+              "sellerId": "${{ github.event.inputs.sellerId }}",
+              "status": "FAILED",
+              "themeId": "${{ github.event.inputs.themeId }}",
+              "themeVersion": "${{ github.event.inputs.themeVersion }}"
+            }'
