@@ -25,7 +25,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Prepare Environment Variables (.env)
         run: |
@@ -37,6 +39,9 @@ jobs:
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
+
+      - name: Fix Corrupt Gradle Wrapper
+        run: gradle wrapper
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
