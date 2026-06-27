@@ -185,7 +185,7 @@ fun QianPulsaDashboard() {
 
               Spacer(modifier = Modifier.height(16.dp))
 
-              Divider(color = Color.White.copy(alpha = 0.2f))
+              HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
 
               Spacer(modifier = Modifier.height(16.dp))
 
