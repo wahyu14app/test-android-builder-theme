@@ -1,0 +1,6 @@
+{
+  "name": "QianPulsa",
+  "description": "Aplikasi PPOB White-Label QianPulsa - Solusi transaksi pulsa, paket data, PLN, dan PPOB terdesentralisasi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

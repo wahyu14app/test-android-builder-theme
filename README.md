@@ -1,105 +1,21 @@
-# Android Builder Theme
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Proyek Android sederhana yang dapat dibangun melalui GitHub Actions dan dipakai sebagai template untuk integrasi webhook QianPulsa white-label.
+# Run and deploy your AI Studio app
 
-## Fitur
-- Menerima input dari workflow_dispatch: sellerId, appName, themeId, themeVersion, themeColor, callbackUrl
-- Menggunakan buildConfigField dan resValue untuk mengirim parameter ke aplikasi
-- Menghasilkan artifact APK release di GitHub Actions
-- Mengirim callback sukses/gagal ke URL QianPulsa dengan header x-hub-signature-256
+This contains everything you need to run your app locally.
 
-## Panduan Integrasi GitHub Action Webhook (QianPulsa White-Label)
+View your app in AI Studio: https://ai.studio/apps/e3dcd24d-65db-4f22-9bd8-476b7d07fdca
 
-Sistem ini berfungsi untuk menerima permintaan build aplikasi Android dari platform utama QianPulsa, memproses build, lalu mengirimkan webhook callback kembali ke server QianPulsa dengan hasil URL APK.
+## Run Locally
 
-### 1. Menerima Data dari Server QianPulsa (Trigger)
-Server QianPulsa akan memanggil repositori ini menggunakan GitHub Actions REST API melalui workflow_dispatch. Data payload yang dikirim dalam object inputs adalah:
+**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
 
-- sellerId: ID unik seller/toko
-- appName: Nama aplikasi yang diatur oleh seller
-- themeId: ID tema
-- themeVersion: Versi tema
-- themeColor: Kode warna Hex untuk tema aplikasi
-- callbackUrl: URL server QianPulsa tujuan callback
 
-### 2. Workflow GitHub Actions
-Workflow yang tersedia di [.github/workflows/build.yml](.github/workflows/build.yml) sudah menangkap input tersebut dan menjalankan build APK.
-
-Setelah build selesai, workflow akan mengirim callback ke URL yang diterima dari input callbackUrl dengan header:
-
-- x-hub-signature-256: isi dengan nilai secret yang disimpan di GitHub Repository Secret
-
-### 3. Secret yang Wajib Disiapkan
-Di GitHub repository, buat repository secret bernama:
-
-- QIANPULSA_WEBHOOK_SECRET
-
-Nilainya harus sama dengan nilai GITHUB_WEBHOOK_SECRET di environment/backend QianPulsa. Jika belum diset, gunakan nilai fallback:
-
-- fallback_secret_qianpulsa_123
-
-### 4. Format Callback
-Callback HTTP POST harus dikirim ke URL yang diterima dari input callbackUrl.
-
-Payload sukses:
-
-```json
-{
-  "sellerId": "<seller-id>",
-  "status": "SUCCESS",
-  "apkUrl": "<url-apk>",
-  "themeId": "<theme-id>",
-  "themeVersion": "<theme-version>"
-}
-```
-
-Payload gagal:
-
-```json
-{
-  "sellerId": "<seller-id>",
-  "status": "FAILED",
-  "errorMessage": "Proses build gagal di tahap kompilasi GitHub Action."
-}
-```
-
-### 5. Contoh Payload yang Diterima di Backend QianPulsa
-Backend Anda bisa menerima payload seperti berikut saat build selesai:
-
-```json
-{
-  "sellerId": "32935e09-7ce2-4df0-832d-bbb23a2ccf49",
-  "status": "SUCCESS",
-  "apkUrl": "https://github.com/wahyu14app/test-android-builder-theme/actions/runs/123456789",
-  "themeId": "classic_blue",
-  "themeVersion": "1.0.0"
-}
-```
-
-Contoh handler sederhana dengan Node.js/Express:
-
-```js
-app.post('/api/webhook/github/callback', (req, res) => {
-  const { sellerId, status, apkUrl, themeId, themeVersion, errorMessage } = req.body;
-
-  console.log('Webhook build result:', { sellerId, status, apkUrl, themeId, themeVersion, errorMessage });
-
-  return res.status(200).json({ received: true });
-});
-```
-
-## Cara menjalankan
-
-### Lokal
-```bash
-./gradlew assembleRelease -PsellerId='32935e09-7ce2-4df0-832d-bbb23a2ccf49' -PappName='Minat' -PthemeId='theme_gaming' -PthemeVersion='1.0.0' -PthemeColor='#ff0000' -PcallbackUrl='https://your-callback-url'
-```
-
-### GitHub Actions
-1. Buka tab Actions di repository GitHub Anda.
-2. Pilih workflow "Build White-Label Android App".
-3. Klik "Run workflow".
-4. Isi input yang sesuai.
-5. Pastikan repository secret QIANPULSA_WEBHOOK_SECRET telah diset.
-
-Payload dispatch yang Anda kirimkan cocok dengan workflow ini.
+1. Open Android Studio
+2. Select **Open** and choose the directory containing this project
+3. Allow Android Studio to fix any incompatibilities as it imports the project.
+4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
+6. Run the app on an emulator or physical device
